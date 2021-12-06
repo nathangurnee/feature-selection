@@ -1,2 +1,5 @@
 # Directories
 bin/
+
+# Python files
+__pycache__

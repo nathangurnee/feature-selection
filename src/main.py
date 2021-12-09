@@ -12,9 +12,7 @@ if __name__ == '__main__':
     data.pop() # Removes the random empty list at the end
 
     choice = input("Type the number of the algorithm you want to run.\n\t1) Forward Selection\n\t2) Backward Elimination\n")
-    if choice == '1':
-        forward_selection(data), range(10)
-    elif choice == '2':
-        backward_elimination(data)
+    if choice == '1' or choice == '2':
+        feature_selection(data, int(choice))
     else:
         print('Incorrect choice.')

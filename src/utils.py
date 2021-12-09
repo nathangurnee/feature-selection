@@ -1,20 +1,20 @@
 from math import sqrt
 import copy
 
-# Performs leave-on-out cross-validation on a data set
-def cross_validation(data, current_set, feature, task):
+# Performs leave-one-out cross-validation on a data set
+def cross_validation(data, current_set, feature, algorithm):
     zero_data = copy.deepcopy(data) # Deep copy of the data set
 
-    # If 'add': set all features not in the current set or not the feature to
+    # If 1: set all features not in the current set or not the feature to
     # be added to zero
-    # If 'remove': set all freatures not in the current set and the feature to
+    # If 2': set all features not in the current set and the feature to
     # be removed to zero
-    if task == 'add':
+    if algorithm == 1:
         for i in range(len(zero_data)):
             for j in range(1, len(zero_data[i])):
                 if j not in current_set and j != feature:
                     zero_data[i][j] = 0
-    elif task == 'remove':
+    else:
         for i in range(len(zero_data)):
             for j in range(1, len(zero_data[i])):
                 if j not in current_set or j == feature:
@@ -48,62 +48,42 @@ def cross_validation(data, current_set, feature, task):
     # Overall accuracy of set
     return number_correctly_classified / len(zero_data)
 
-# Iterates over the features of the data using the forward selection algorithm
-def forward_selection(data):
-    current_set_of_features = set()
+# Iterates over the features of the data using two algorithms:
+# -- Forward selection: starts with empty set of features and adds the feature
+#    with the highest accuracy at each level
+# -- Backward elimination: starts with a set of all the features and removes the
+#    feature that creates the worst accuracy at each level
+def feature_selection(data, algorithm):
+    current_set_of_features = set() if algorithm == 1 else set(range(1, len(data[0])))
     best_accuracy_overall = 0
     best_set_overall = set()
 
     for i in range(len(data[0]) - 1):
-        feature_to_add_at_this_level = None
-        best_so_far_accuracy = 0
-    
-        for j in range(1, len(data[0])):
-            if j not in current_set_of_features:
-                accuracy = cross_validation(data, current_set_of_features, j, 'add')
-                if accuracy > best_so_far_accuracy:
-                    best_so_far_accuracy = accuracy
-                    feature_to_add_at_this_level = j;
-
-        # Adds the feature that yields the best accuracy
-        current_set_of_features.add(feature_to_add_at_this_level)
-
-        print(current_set_of_features)
-        print(best_so_far_accuracy)
-
-        if best_so_far_accuracy > best_accuracy_overall:
-            best_accuracy_overall = best_so_far_accuracy
-            best_set_overall = copy.copy(current_set_of_features)
-
-    
-    print('The best feature subset is ' + str(best_set_overall) + ', which has an accuracy of ' + str(best_accuracy_overall * 100) + '%')
-
-# Iterates over the features of the data using the backward elimination
-# algorithm
-def backward_elimination(data):
-    current_set_of_features = set(range(1, len(data[0])))
-    best_accuracy_overall = 0
-    best_set_overall = set()
-
-    for i in range(len(data[0]) - 1):
-        feature_to_remove_at_this_level = None
-        worst_so_far_accuracy = float('inf')
+        feature_at_this_level = None
         best_so_far_accuracy = 0
 
         for j in range(1, len(data[0])):
-            if j in current_set_of_features:
-                accuracy = cross_validation(data, current_set_of_features, j, 'remove')
-                if accuracy < worst_so_far_accuracy:
-                    worst_so_far_accuracy = accuracy
-                    feature_to_remove_at_this_level = j
-                if accuracy > best_so_far_accuracy:
-                    best_so_far_accuracy = accuracy
+            if algorithm == 1:
+                if j not in current_set_of_features:
+                    accuracy = cross_validation(data, current_set_of_features, j, algorithm)
+                    if accuracy > best_so_far_accuracy:
+                        best_so_far_accuracy = accuracy
+                        feature_at_this_level = j
+            else:
+                if j in current_set_of_features:
+                    accuracy = cross_validation(data, current_set_of_features, j, algorithm)
+                    if accuracy > best_so_far_accuracy:
+                        best_so_far_accuracy = accuracy
+                        feature_at_this_level = j
 
-        # Removes the feature that yields the worst accuracy
-        current_set_of_features.remove(feature_to_remove_at_this_level)
+        # Chooses the feature that yields the best accuracy
+        if algorithm == 1:
+            current_set_of_features.add(feature_at_this_level)
+        else:
+            current_set_of_features.remove(feature_at_this_level)
 
-        print(current_set_of_features)
-        print(best_so_far_accuracy)
+        print('Current features: ', current_set_of_features)
+        print('Accuracy: ', best_so_far_accuracy)
 
         if best_so_far_accuracy > best_accuracy_overall:
             best_accuracy_overall = best_so_far_accuracy
